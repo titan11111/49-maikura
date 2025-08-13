@@ -20,11 +20,17 @@
             <button data-type="5" title="5: 木ブロック" class="block-btn">🟫</button>
             <button id="gridToggle" title="グリッド表示切替" class="grid-btn">グリッド</button>
         </div>
-        <div class="hint">左クリック=設置 / 右クリック=破壊 / 1-5=種類選択 / G=グリッド切替</div>
+        <div class="hint">左クリック=設置 / 右クリック=破壊 / 1-5=種類選択 / G=グリッド切替 / スマホ: ボタン操作</div>
     </div>
 
     <div id="crosshair" class="crosshair">+</div>
     <canvas id="gameCanvas"></canvas>
+
+    <!-- Mobile Controls -->
+    <div id="mobileControls" class="mobile-controls">
+        <button id="placeBtn" class="mobile-btn active">設置</button>
+        <button id="breakBtn" class="mobile-btn">破壊</button>
+    </div>
 
     <script src="script.js"></script>
 </body>

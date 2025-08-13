@@ -53,6 +53,8 @@ const BLOCK_TYPES = {
 // ===== ワールドデータ =====
 const world = {};
 let currentBlockType = 1;
+let currentAction = 'place';
+const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
 // 初期地面作成
 for (let x = -10; x <= 10; x++) {
@@ -137,21 +139,22 @@ canvas.addEventListener('pointerdown', (event) => {
     const position = intersection.object.position;
     const face = intersection.face;
     const normal = face.normal.clone();
+    const action = isMobile ? currentAction : (event.button === 0 ? 'place' : (event.button === 2 ? 'break' : null));
 
-    if (event.button === 0) { // 左クリック - ブロック設置
+    if (action === 'place') {
         const newX = Math.round(position.x + normal.x);
         const newY = Math.round(position.y + normal.y);
         const newZ = Math.round(position.z + normal.z);
-        
+
         // 範囲制限
         if (Math.abs(newX) <= 15 && Math.abs(newZ) <= 15 && newY >= 0 && newY <= 20) {
             addBlock(newX, newY, newZ, currentBlockType);
         }
-    } else if (event.button === 2) { // 右クリック - ブロック破壊
+    } else if (action === 'break') {
         const x = Math.round(position.x);
         const y = Math.round(position.y);
         const z = Math.round(position.z);
-        
+
         // 地面（y=0）は破壊不可
         if (y > 0) {
             removeBlock(x, y, z);
@@ -172,6 +175,8 @@ canvas.addEventListener('contextmenu', (event) => {
 const hud = document.getElementById('hud');
 const blockButtons = hud.querySelectorAll('.block-btn');
 const gridToggle = document.getElementById('gridToggle');
+const placeBtn = document.getElementById('placeBtn');
+const breakBtn = document.getElementById('breakBtn');
 
 // ブロック選択
 blockButtons.forEach(button => {
@@ -187,6 +192,23 @@ function updateActiveButton() {
         const type = parseInt(button.dataset.type);
         button.classList.toggle('active', type === currentBlockType);
     });
+}
+
+if (placeBtn && breakBtn) {
+    placeBtn.addEventListener('click', () => {
+        currentAction = 'place';
+        updateActionButtons();
+    });
+    breakBtn.addEventListener('click', () => {
+        currentAction = 'break';
+        updateActionButtons();
+    });
+}
+
+function updateActionButtons() {
+    if (!placeBtn || !breakBtn) return;
+    placeBtn.classList.toggle('active', currentAction === 'place');
+    breakBtn.classList.toggle('active', currentAction === 'break');
 }
 
 // グリッド切替
@@ -225,6 +247,7 @@ function animate() {
 // ===== 初期化 =====
 buildWorld();
 updateActiveButton();
+updateActionButtons();
 animate();
 
 console.log('まいくら風ボクセルビルダーが起動しました！');

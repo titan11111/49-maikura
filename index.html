@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>まいくら風ボクセルビルダー</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+    <div id="hud" class="hud">
+        <div class="panel">
+            <span class="label">ブロック</span>
+            <button data-type="1" title="1: 草ブロック" class="block-btn active">🟢</button>
+            <button data-type="2" title="2: 土ブロック" class="block-btn">🟤</button>
+            <button data-type="3" title="3: 石ブロック" class="block-btn">⚫</button>
+            <button data-type="4" title="4: 砂ブロック" class="block-btn">🟡</button>
+            <button data-type="5" title="5: 木ブロック" class="block-btn">🟫</button>
+            <button id="gridToggle" title="グリッド表示切替" class="grid-btn">グリッド</button>
+        </div>
+        <div class="hint">左クリック=設置 / 右クリック=破壊 / 1-5=種類選択 / G=グリッド切替</div>
+    </div>
+
+    <div id="crosshair" class="crosshair">+</div>
+    <canvas id="gameCanvas"></canvas>
+
+    <script src="script.js"></script>
+</body>
+</html>

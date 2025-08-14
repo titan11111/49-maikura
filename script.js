@@ -56,6 +56,9 @@ let currentBlockType = 1;
 let currentAction = 'place';
 const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
+// 動物データ
+const animals = [];
+
 // 初期地面作成
 for (let x = -10; x <= 10; x++) {
     for (let z = -10; z <= 10; z++) {
@@ -102,6 +105,21 @@ function buildWorld() {
         scene.add(block);
         world[key].mesh = block;
     }
+}
+
+// ===== 動物 =====
+function spawnAnimal() {
+    const size = 0.8;
+    const geometry = new THREE.BoxGeometry(size, size, size);
+    const colors = [0xffffff, 0xffc0cb, 0xffd27f];
+    const material = new THREE.MeshLambertMaterial({ color: colors[Math.floor(Math.random() * colors.length)] });
+    const animal = new THREE.Mesh(geometry, material);
+    animal.castShadow = true;
+    const x = Math.floor(Math.random() * 21) - 10;
+    const z = Math.floor(Math.random() * 21) - 10;
+    animal.position.set(x, size / 2, z);
+    scene.add(animal);
+    animals.push(animal);
 }
 
 // ===== レイキャスト =====
@@ -175,6 +193,7 @@ canvas.addEventListener('contextmenu', (event) => {
 const hud = document.getElementById('hud');
 const blockButtons = hud.querySelectorAll('.block-btn');
 const gridToggle = document.getElementById('gridToggle');
+const spawnAnimalBtn = document.getElementById('spawnAnimal');
 const placeBtn = document.getElementById('placeBtn');
 const breakBtn = document.getElementById('breakBtn');
 
@@ -217,6 +236,12 @@ gridToggle.addEventListener('click', () => {
     gridHelper.visible = gridVisible;
 });
 
+if (spawnAnimalBtn) {
+    spawnAnimalBtn.addEventListener('click', () => {
+        spawnAnimal();
+    });
+}
+
 // ===== キーボード操作 =====
 document.addEventListener('keydown', (event) => {
     const key = event.key;
@@ -256,3 +281,4 @@ console.log('- 左クリック: ブロック設置');
 console.log('- 右クリック: ブロック破壊');
 console.log('- 1-5キー: ブロック種類選択');
 console.log('- Gキー: グリッド表示切替');
+console.log('- 🐄ボタン: 動物スポーン');

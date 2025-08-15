@@ -138,26 +138,29 @@ function createAnimalModel(color) {
 
     // 脚
     const legGeometry = new THREE.BoxGeometry(0.2, 0.5, 0.2);
+    legGeometry.translate(0, -0.25, 0); // 上部を回転軸に
     const legPositions = [
-        [-0.35, 0.25, -0.2],
-        [0.35, 0.25, -0.2],
-        [-0.35, 0.25, 0.2],
-        [0.35, 0.25, 0.2]
+        [-0.35, 0.5, -0.2],
+        [0.35, 0.5, -0.2],
+        [-0.35, 0.5, 0.2],
+        [0.35, 0.5, 0.2]
     ];
+    const legs = [];
     legPositions.forEach(pos => {
         const leg = new THREE.Mesh(legGeometry, bodyMaterial);
         leg.position.set(...pos);
         leg.castShadow = true;
         group.add(leg);
+        legs.push(leg);
     });
 
-    return group;
+    return { mesh: group, legs };
 }
 
 function spawnAnimal() {
     const colors = [0xffffff, 0xffc0cb, 0xffd27f];
     const color = colors[Math.floor(Math.random() * colors.length)];
-    const animalMesh = createAnimalModel(color);
+    const { mesh: animalMesh, legs } = createAnimalModel(color);
 
     const x = Math.floor(Math.random() * 21) - 10;
     const z = Math.floor(Math.random() * 21) - 10;
@@ -168,9 +171,11 @@ function spawnAnimal() {
     const theta = Math.random() * Math.PI * 2;
     animals.push({
         mesh: animalMesh,
+        legs,
         direction: new THREE.Vector3(Math.cos(theta), 0, Math.sin(theta)),
         speed: 0.02 + Math.random() * 0.01,
-        changeCountdown: Math.floor(Math.random() * 200 + 100)
+        changeCountdown: Math.floor(Math.random() * 200 + 100),
+        step: 0
     });
 }
 
@@ -200,6 +205,13 @@ function updateAnimals() {
         // 向きを進行方向に合わせる
         animal.mesh.rotation.y = Math.atan2(animal.direction.z, animal.direction.x);
 
+        // 足のアニメーション
+        animal.step += animal.speed * 5;
+        animal.legs.forEach((leg, index) => {
+            const phase = animal.step + (index % 2 === 0 ? 0 : Math.PI);
+            leg.rotation.x = Math.sin(phase) * 0.5;
+        });
+
         // 範囲外に出たら方向転換
         if (animal.mesh.position.x < -10 || animal.mesh.position.x > 10) {
             animal.direction.x *= -1;
@@ -218,6 +230,13 @@ function updateAnimals() {
             animal.changeCountdown = Math.floor(Math.random() * 200 + 100);
         }
     });
+}
+
+// 動物を倒す
+function killAnimal() {
+    const animal = animals.pop();
+    if (!animal) return;
+    scene.remove(animal.mesh);
 }
 
 // ===== レイキャスト =====
@@ -292,6 +311,7 @@ const hud = document.getElementById('hud');
 const blockButtons = hud.querySelectorAll('.block-btn');
 const gridToggle = document.getElementById('gridToggle');
 const spawnAnimalBtn = document.getElementById('spawnAnimal');
+const killAnimalBtn = document.getElementById('killAnimal');
 const placeBtn = document.getElementById('placeBtn');
 const breakBtn = document.getElementById('breakBtn');
 
@@ -340,6 +360,12 @@ if (spawnAnimalBtn) {
     });
 }
 
+if (killAnimalBtn) {
+    killAnimalBtn.addEventListener('click', () => {
+        killAnimal();
+    });
+}
+
 // ===== キーボード操作 =====
 document.addEventListener('keydown', (event) => {
     const key = event.key;
@@ -381,3 +407,4 @@ console.log('- 右クリック: ブロック破壊');
 console.log('- 1-5キー: ブロック種類選択');
 console.log('- Gキー: グリッド表示切替');
 console.log('- 🐄ボタン: 動物スポーン');
+console.log('- ☠️ボタン: 動物倒す');

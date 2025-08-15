@@ -108,6 +108,16 @@ function buildWorld() {
     }
 }
 
+// 指定したx,z座標で一番高いブロックのY座標を取得
+function getHighestBlockY(x, z) {
+    for (let y = 20; y >= -1; y--) {
+        if (world[`${x},${y},${z}`]) {
+            return y;
+        }
+    }
+    return -1;
+}
+
 // ===== 動物 =====
 // シンプルな四足動物モデルを作成
 function createAnimalModel(color) {
@@ -151,7 +161,8 @@ function spawnAnimal() {
 
     const x = Math.floor(Math.random() * 21) - 10;
     const z = Math.floor(Math.random() * 21) - 10;
-    animalMesh.position.set(x, 0.5, z); // 地面の上に配置
+    const groundY = getHighestBlockY(x, z);
+    animalMesh.position.set(x, groundY + 0.5, z); // 地形に合わせて配置
     scene.add(animalMesh);
 
     const theta = Math.random() * Math.PI * 2;
@@ -166,8 +177,25 @@ function spawnAnimal() {
 // 動物の移動処理
 function updateAnimals() {
     animals.forEach(animal => {
-        animal.mesh.position.x += animal.direction.x * animal.speed;
-        animal.mesh.position.z += animal.direction.z * animal.speed;
+        const newX = animal.mesh.position.x + animal.direction.x * animal.speed;
+        const newZ = animal.mesh.position.z + animal.direction.z * animal.speed;
+
+        const currentX = Math.round(animal.mesh.position.x);
+        const currentZ = Math.round(animal.mesh.position.z);
+        const currentGround = getHighestBlockY(currentX, currentZ);
+
+        const targetX = Math.round(newX);
+        const targetZ = Math.round(newZ);
+        const targetGround = getHighestBlockY(targetX, targetZ);
+
+        if (targetGround - currentGround > 1 || world[`${targetX},${targetGround + 1},${targetZ}`]) {
+            animal.direction.x *= -1;
+            animal.direction.z *= -1;
+        } else {
+            animal.mesh.position.x = newX;
+            animal.mesh.position.z = newZ;
+            animal.mesh.position.y = targetGround + 0.5;
+        }
 
         // 向きを進行方向に合わせる
         animal.mesh.rotation.y = Math.atan2(animal.direction.z, animal.direction.x);

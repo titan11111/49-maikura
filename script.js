@@ -57,6 +57,7 @@ let currentAction = 'place';
 const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
 // 動物データ
+// 移動や方向を管理するため、各要素は { mesh, direction, speed, changeCountdown } を保持する
 const animals = [];
 
 // 初期地面作成
@@ -108,18 +109,87 @@ function buildWorld() {
 }
 
 // ===== 動物 =====
+// シンプルな四足動物モデルを作成
+function createAnimalModel(color) {
+    const group = new THREE.Group();
+    const bodyMaterial = new THREE.MeshLambertMaterial({ color });
+
+    // 体
+    const body = new THREE.Mesh(new THREE.BoxGeometry(1, 0.5, 0.5), bodyMaterial);
+    body.position.y = 0.75; // 脚の上に乗せる
+    body.castShadow = true;
+    group.add(body);
+
+    // 頭
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), bodyMaterial);
+    head.position.set(0.7, 0.8, 0);
+    head.castShadow = true;
+    group.add(head);
+
+    // 脚
+    const legGeometry = new THREE.BoxGeometry(0.2, 0.5, 0.2);
+    const legPositions = [
+        [-0.35, 0.25, -0.2],
+        [0.35, 0.25, -0.2],
+        [-0.35, 0.25, 0.2],
+        [0.35, 0.25, 0.2]
+    ];
+    legPositions.forEach(pos => {
+        const leg = new THREE.Mesh(legGeometry, bodyMaterial);
+        leg.position.set(...pos);
+        leg.castShadow = true;
+        group.add(leg);
+    });
+
+    return group;
+}
+
 function spawnAnimal() {
-    const size = 0.8;
-    const geometry = new THREE.BoxGeometry(size, size, size);
     const colors = [0xffffff, 0xffc0cb, 0xffd27f];
-    const material = new THREE.MeshLambertMaterial({ color: colors[Math.floor(Math.random() * colors.length)] });
-    const animal = new THREE.Mesh(geometry, material);
-    animal.castShadow = true;
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    const animalMesh = createAnimalModel(color);
+
     const x = Math.floor(Math.random() * 21) - 10;
     const z = Math.floor(Math.random() * 21) - 10;
-    animal.position.set(x, size / 2, z);
-    scene.add(animal);
-    animals.push(animal);
+    animalMesh.position.set(x, 0.5, z); // 地面の上に配置
+    scene.add(animalMesh);
+
+    const theta = Math.random() * Math.PI * 2;
+    animals.push({
+        mesh: animalMesh,
+        direction: new THREE.Vector3(Math.cos(theta), 0, Math.sin(theta)),
+        speed: 0.02 + Math.random() * 0.01,
+        changeCountdown: Math.floor(Math.random() * 200 + 100)
+    });
+}
+
+// 動物の移動処理
+function updateAnimals() {
+    animals.forEach(animal => {
+        animal.mesh.position.x += animal.direction.x * animal.speed;
+        animal.mesh.position.z += animal.direction.z * animal.speed;
+
+        // 向きを進行方向に合わせる
+        animal.mesh.rotation.y = Math.atan2(animal.direction.z, animal.direction.x);
+
+        // 範囲外に出たら方向転換
+        if (animal.mesh.position.x < -10 || animal.mesh.position.x > 10) {
+            animal.direction.x *= -1;
+            animal.mesh.position.x = THREE.MathUtils.clamp(animal.mesh.position.x, -10, 10);
+        }
+        if (animal.mesh.position.z < -10 || animal.mesh.position.z > 10) {
+            animal.direction.z *= -1;
+            animal.mesh.position.z = THREE.MathUtils.clamp(animal.mesh.position.z, -10, 10);
+        }
+
+        // ランダムに方向転換
+        animal.changeCountdown--;
+        if (animal.changeCountdown <= 0) {
+            const theta = Math.random() * Math.PI * 2;
+            animal.direction.set(Math.cos(theta), 0, Math.sin(theta));
+            animal.changeCountdown = Math.floor(Math.random() * 200 + 100);
+        }
+    });
 }
 
 // ===== レイキャスト =====
@@ -266,6 +336,7 @@ window.addEventListener('resize', () => {
 function animate() {
     requestAnimationFrame(animate);
     controls.update();
+    updateAnimals();
     renderer.render(scene, camera);
 }
 
